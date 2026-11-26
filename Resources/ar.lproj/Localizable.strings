@@ -1,0 +1,12 @@
+"tab.library"="المكتبة"; "tab.create"="إنشاء"; "tab.reports"="التقارير"; "tab.settings"="الإعدادات";
+"lib.empty"="ماكو فيديوهات. استورد فيديو من الصور أو الملفات."; "lib.photos"="من الصور"; "lib.files"="من الملفات";
+"lib.info"="معلومات الفيديو"; "info.name"="الاسم"; "info.duration"="المدة"; "info.resolution"="الدقة"; "info.fps"="معدل الإطارات"; "info.size"="الحجم";
+"create.select"="اختر فيديو"; "create.name"="اسم الخلفية"; "create.template"="القالب"; "create.start"="إنشاء الخلفية"; "create.cancel"="إلغاء";
+"stage.analyze"="1/5 تحليل الفيديو"; "stage.extract"="2/5 استخراج الإطارات"; "stage.build"="3/5 بناء الخلفية"; "stage.validate"="4/5 فحص ملف الخلفية"; "stage.done"="5/5 اكتملت العملية";
+"result.ok"="تم إنشاء الخلفية والتحقق منها"; "result.share"="مشاركة / حفظ في الملفات"; "result.frames"="عدد الإطارات"; "result.refs"="مراجع الحركة"; "result.missing"="المراجع المفقودة"; "result.zip"="فحص الأرشيف";
+"reports.archive"="أرشيف التقارير"; "reports.history"="سجل عمليات التحويل"; "reports.empty"="ماكو شي لحد الحين."; "reports.clear"="حذف الكل"; "status.ok"="ناجحة"; "status.fail"="فاشلة";
+"settings.language"="اللغة"; "settings.appearance"="المظهر"; "settings.output"="مسار الحفظ"; "settings.output.default"="مجلد التطبيق (يظهر في الملفات)"; "settings.output.choose"="اختيار مجلد…";
+"settings.templates"="القوالب"; "settings.template.import"="استيراد قالب (.tendies)"; "settings.template.default"="القالب المدمج"; "settings.errors"="سجل الأخطاء"; "settings.errors.clear"="مسح سجل الأخطاء";
+"about.title"="حول التطبيق"; "about.app"="التطبيق"; "about.dev"="المطوّر"; "about.x"="حساب X"; "about.privacy"="مجاني. بدون إعلانات أو اشتراكات. كل المعالجة محلية ولا يخرج أي ملف من جهازك.";
+"common.delete"="حذف"; "common.cancel"="إلغاء"; "common.ok"="موافق"; "error.title"="خطأ"; "lang.system"="النظام"; "lang.ar"="العربية"; "lang.en"="English";
+"appearance.system"="النظام"; "appearance.light"="فاتح"; "appearance.dark"="داكن"; "common.confirm"="متأكد؟";

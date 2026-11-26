@@ -1,0 +1,39 @@
+name: Build unsigned IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  ipa:
+    runs-on: macos-latest        # free for public repos
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: ./tools/build_ipa.sh
+      - uses: actions/upload-artifact@v4
+        with: { name: MJ-Wallpaper-ipa, path: MJ-Wallpaper.ipa }
+  selftest:                      # runs the real Swift engine in the iOS Simulator and compares with the Python reference
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen ffmpeg
+      - run: xcodegen generate
+      - name: Build for simulator
+        run: |
+          xcodebuild -project MJWallpaper.xcodeproj -scheme MJWallpaper -sdk iphonesimulator \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Run engine on watermark.MOV
+        run: |
+          DEV=$(xcrun simctl list devices available | grep -m1 iPhone | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')
+          xcrun simctl boot "$DEV"
+          xcrun simctl install "$DEV" build/Build/Products/Debug-iphonesimulator/MJWallpaper.app
+          xcrun simctl launch --console-pty "$DEV" com.hamadejmj.mjwallpaper --selftest \
+            "$PWD/Reference/watermark.MOV" "$PWD/Resources/Video-B-anim.tendies" "$PWD/swift-out.tendies" | tee selftest.log
+          grep "SELFTEST OK" selftest.log
+      - name: Verify + compare with reference engine
+        run: |
+          python3 tools/verify_tendies.py swift-out.tendies Reference/ll.tendies
+          python3 tools/reference_build.py Reference/watermark.MOV Resources/Video-B-anim.tendies py-out.tendies
+          python3 tools/compare_outputs.py swift-out.tendies py-out.tendies Reference/ll.tendies
+      - uses: actions/upload-artifact@v4
+        with: { name: selftest-output, path: "*.tendies" }

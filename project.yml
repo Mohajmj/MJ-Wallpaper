@@ -1,0 +1,43 @@
+# XcodeGen spec -> generates MJWallpaper.xcodeproj  (run: xcodegen generate)
+name: MJWallpaper
+options:
+  bundleIdPrefix: com.hamadejmj
+  deploymentTarget:
+    iOS: "14.0"          # NOT yet validated by on-device tests; see Docs/TEST-REPORT.md
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGNING_ALLOWED: "NO"
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGN_IDENTITY: ""
+    DEVELOPMENT_TEAM: ""
+targets:
+  MJWallpaper:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hamadejmj.mjwallpaper
+        PRODUCT_NAME: MJWallpaper
+        TARGETED_DEVICE_FAMILY: "1,2"
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: "NO"
+        INFOPLIST_FILE: Info.plist
+        ENABLE_BITCODE: "NO"
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: MJ Wallpaper
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, ar]
+        UILaunchScreen: {}
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        UIRequiredDeviceCapabilities: [arm64]
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]

@@ -1,0 +1,12 @@
+"tab.library"="Library"; "tab.create"="Create"; "tab.reports"="Reports"; "tab.settings"="Settings";
+"lib.empty"="No videos yet. Import one from Photos or Files."; "lib.photos"="From Photos"; "lib.files"="From Files";
+"lib.info"="Video info"; "info.name"="Name"; "info.duration"="Duration"; "info.resolution"="Resolution"; "info.fps"="Frame rate"; "info.size"="Size";
+"create.select"="Choose a video"; "create.name"="Wallpaper name"; "create.template"="Template"; "create.start"="Create wallpaper"; "create.cancel"="Cancel";
+"stage.analyze"="1/5 Analyzing video"; "stage.extract"="2/5 Extracting frames"; "stage.build"="3/5 Building wallpaper"; "stage.validate"="4/5 Validating archive"; "stage.done"="5/5 Done";
+"result.ok"="Wallpaper created and verified"; "result.share"="Share / Save to Files"; "result.frames"="Frames"; "result.refs"="Animation references"; "result.missing"="Missing references"; "result.zip"="Archive check";
+"reports.archive"="Report archive"; "reports.history"="Conversion history"; "reports.empty"="Nothing here yet."; "reports.clear"="Clear all"; "status.ok"="Succeeded"; "status.fail"="Failed";
+"settings.language"="Language"; "settings.appearance"="Appearance"; "settings.output"="Save location"; "settings.output.default"="App folder (visible in Files)"; "settings.output.choose"="Choose folder…";
+"settings.templates"="Templates"; "settings.template.import"="Import template (.tendies)"; "settings.template.default"="Built-in template"; "settings.errors"="Error log"; "settings.errors.clear"="Clear error log";
+"about.title"="About"; "about.app"="Application"; "about.dev"="Developer"; "about.x"="X profile"; "about.privacy"="Free. No ads. No subscriptions. All processing is local; no file leaves your device.";
+"common.delete"="Delete"; "common.cancel"="Cancel"; "common.ok"="OK"; "error.title"="Error"; "lang.system"="System"; "lang.ar"="العربية"; "lang.en"="English";
+"appearance.system"="System"; "appearance.light"="Light"; "appearance.dark"="Dark"; "common.confirm"="Are you sure?";
