@@ -3,7 +3,7 @@
 Usage: reference_build.py video template output   (needs ffmpeg/ffprobe + the template)"""
 import sys, os, re, json, glob, zipfile, shutil, subprocess, tempfile
 
-def run(cmd): return subprocess.run(cmd, check=True, text=True)
+def run(cmd): return subprocess.run(cmd, check=True, stdout=subprocess.PIPE, text=True)
 
 def build(video, base_path, output):
     work = tempfile.mkdtemp(prefix="wallpaper-")
