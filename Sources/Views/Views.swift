@@ -24,7 +24,8 @@ func infoRows(_ i: VideoInfo) -> [(String, String)] {
 
 struct LibraryView: View {
     @EnvironmentObject var store: AppStore
-    @State private var showPhotos = false, showFiles = false
+    @State private var showPhotos = false
+    @State private var showFiles = false
     @State private var infoURL: URL?
     var body: some View {
         NavigationView {
@@ -202,7 +203,8 @@ struct ReportsView: View {
 
 struct SettingsView: View {
     @EnvironmentObject var store: AppStore
-    @State private var showFolder = false, showTemplate = false
+    @State private var showFolder = false
+    @State private var showTemplate = false
     var body: some View {
         NavigationView {
             Form {
