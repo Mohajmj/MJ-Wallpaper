@@ -150,7 +150,7 @@ struct CreateView: View {
                     DispatchQueue.main.async { percent = p; stageKey = key } }
                 let final = store.deliver(out)
                 store.record(video: video, output: final, ok: true, report: r, elapsed: Date().timeIntervalSince(began))
-                DispatchQueue.main.async { result = r; resultURL = out; running = false }
+                DispatchQueue.main.async { result = r; resultURL = final; running = false }
             } catch {
                 try? FileManager.default.removeItem(at: out)
                 store.logError("build \(video.lastPathComponent): \(error)")

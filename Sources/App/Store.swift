@@ -89,8 +89,16 @@ final class AppStore: ObservableObject {
 
     // MARK: output folder (security-scoped bookmark)
     func setOutputFolder(_ u: URL) {
-        let ok = u.startAccessingSecurityScopedResource(); defer { if ok { u.stopAccessingSecurityScopedResource() } }
-        if let b = try? u.bookmarkData() { ud.set(b, forKey: "outputBookmark"); customOutputName = u.lastPathComponent }
+        let ok = u.startAccessingSecurityScopedResource()
+        defer { if ok { u.stopAccessingSecurityScopedResource() } }
+        do {
+            let b = try u.bookmarkData()
+            ud.set(b, forKey: "outputBookmark")
+            customOutputName = u.lastPathComponent
+            logError("setOutputFolder: saved bookmark for \(u.lastPathComponent)")
+        } catch {
+            logError("setOutputFolder failed: \(error)")
+        }
     }
     func resetOutputFolder() { ud.removeObject(forKey: "outputBookmark"); customOutputName = nil }
     private func resolveBookmark(_ b: Data) -> URL? {
@@ -99,11 +107,25 @@ final class AppStore: ObservableObject {
     }
     /// Copies the finished file into the user-chosen folder when one is set. Returns final location.
     func deliver(_ file: URL) -> URL {
-        guard let b = ud.data(forKey: "outputBookmark"), let folder = resolveBookmark(b) else { return file }
-        let ok = folder.startAccessingSecurityScopedResource(); defer { if ok { folder.stopAccessingSecurityScopedResource() } }
+        guard let b = ud.data(forKey: "outputBookmark") else {
+            logError("deliver: no output bookmark; kept internally: \(file.path)")
+            return file
+        }
+        guard let folder = resolveBookmark(b) else {
+            logError("deliver: bookmark resolution failed")
+            return file
+        }
+        let access = folder.startAccessingSecurityScopedResource()
+        defer { if access { folder.stopAccessingSecurityScopedResource() } }
         let dst = folder.appendingPathComponent(file.lastPathComponent)
-        do { try? FileManager.default.removeItem(at: dst); try FileManager.default.copyItem(at: file, to: dst); return dst }
-        catch { logError("deliver: \(error)"); return file }
+        do {
+            try FileManager.default.copyItem(at: file, to: dst)
+            logError("deliver: copied successfully to \(dst.path)")
+            return dst
+        } catch {
+            logError("deliver: copy failed: \(error)")
+            return file
+        }
     }
     func uniqueOutput(_ name: String) -> URL {
         let clean = name.components(separatedBy: CharacterSet(charactersIn: "/\\:")).joined().trimmingCharacters(in: .whitespaces)
