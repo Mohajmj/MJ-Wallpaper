@@ -80,10 +80,11 @@ final class AppStore: ObservableObject {
 
     // MARK: output folder (security-scoped bookmark)
     func setOutputFolder(_ u: URL) {
+        logError("folder: entered")
         let access = u.startAccessingSecurityScopedResource()
         defer { if access { u.stopAccessingSecurityScopedResource() } }
         do {
-            let b = try u.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
+            let b = try u.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
             ud.set(b, forKey: "outputBookmark")
             customOutputName = u.lastPathComponent
             logError("setOutputFolder: saved bookmark for \(u.lastPathComponent)")
@@ -122,7 +123,7 @@ final class AppStore: ObservableObject {
         let access = folder.startAccessingSecurityScopedResource()
         defer { if access { folder.stopAccessingSecurityScopedResource() } }
         do {
-            let refreshed = try folder.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
+            let refreshed = try folder.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
             ud.set(refreshed, forKey: "outputBookmark")
             logError("bookmark: refreshed during folder access")
         } catch {

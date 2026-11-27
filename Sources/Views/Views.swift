@@ -217,7 +217,7 @@ struct SettingsView: View {
                 }
                 Section(header: T("settings.output")) {
                     Text(store.customOutputName ?? Loc.t("settings.output.default")).foregroundColor(.secondary)
-                    Button { showFolder = true } label: { T("settings.output.choose") }
+                    Button { store.logError("folder: open picker"); showFolder = true } label: { T("settings.output.choose") }
                     if store.customOutputName != nil { Button { store.resetOutputFolder() } label: { T("settings.output.default") } }
                 }
                 Section(header: T("settings.errors")) {
@@ -227,10 +227,14 @@ struct SettingsView: View {
                 Section { NavigationLink(destination: AboutView()) { T("about.title") } }
             }
             .navigationTitle(Loc.t("tab.settings"))
-            .sheet(isPresented: $showFolder) {
-                FolderPicker { url in
-                    store.setOutputFolder(url)
-                    showFolder = false
+            .fileImporter(isPresented: $showFolder, allowedContentTypes: [.folder], allowsMultipleSelection: false) { result in
+                switch result {
+                case .success(let urls):
+                    if let url = urls.first {
+                        store.logError("folder: picked \(url.path)"); store.setOutputFolder(url)
+                    }
+                case .failure(let error):
+                    store.logError("folder picker failed: \(error)")
                 }
             }
 
