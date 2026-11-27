@@ -13,7 +13,7 @@ def build(video, base_path, output):
         duration = float(meta["format"]["duration"])
         fd = os.path.join(work, "frames"); os.makedirs(fd)
         run(["ffmpeg","-y","-v","error","-i",video,"-map","0:v:0","-vf","scale=468:1013:force_original_aspect_ratio=increase,crop=468:1013",
-             "-vsync","0","-q:v","2",os.path.join(fd,"frame-%06d.jpg")])
+             "-fps_mode","passthrough","-q:v","2",os.path.join(fd,"frame-%06d.jpg")])
         frames = sorted(glob.glob(fd + "/*.jpg"))
         base = zipfile.ZipFile(base_path)
         bp = next(n for n in base.namelist() if "Background" in n and n.endswith("main.caml"))
