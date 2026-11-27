@@ -26,7 +26,6 @@ struct ReportRecord: Codable, Identifiable {
 final class AppStore: ObservableObject {
     static let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     let libraryDir = docs.appendingPathComponent("MJ-Library")
-    let templatesDir = docs.appendingPathComponent("MJ-Templates")
     let outputDir = docs.appendingPathComponent("MJ-Wallpapers")
     let historyURL = docs.appendingPathComponent("MJ-History.jsonl")
     let reportsURL = docs.appendingPathComponent("MJ-Reports.jsonl")
@@ -34,20 +33,17 @@ final class AppStore: ObservableObject {
     private let ud = UserDefaults.standard
 
     @Published var videos: [URL] = []
-    @Published var templates: [URL] = []
     @Published var history: [HistoryRecord] = []
     @Published var reports: [ReportRecord] = []
     @Published var language: String { didSet { ud.set(language, forKey: "lang"); Loc.lang = language } }
     @Published var appearance: String { didSet { ud.set(appearance, forKey: "appearance") } }
-    @Published var selectedTemplate: String { didSet { ud.set(selectedTemplate, forKey: "template") } } // "builtin" or file name
     @Published var customOutputName: String? = nil
 
     init() {
         language = ud.string(forKey: "lang") ?? "system"
         appearance = ud.string(forKey: "appearance") ?? "system"
-        selectedTemplate = ud.string(forKey: "template") ?? "builtin"
         Loc.lang = language
-        for d in [libraryDir, templatesDir, outputDir] { try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true) }
+        for d in [libraryDir, outputDir] { try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true) }
         if let b = ud.data(forKey: "outputBookmark"), let u = resolveBookmark(b) { customOutputName = u.lastPathComponent }
         reload()
     }
@@ -55,11 +51,10 @@ final class AppStore: ObservableObject {
     var colorScheme: ColorScheme? { appearance == "light" ? .light : appearance == "dark" ? .dark : nil }
     var isArabic: Bool { language == "ar" || (language == "system" && (Locale.preferredLanguages.first ?? "").hasPrefix("ar")) }
 
-    // MARK: library & templates
+    // MARK: library
     func reload() {
         let exts = ["mp4", "mov", "m4v", "mkv", "avi"]
         videos = list(libraryDir).filter { exts.contains($0.pathExtension.lowercased()) }
-        templates = list(templatesDir).filter { $0.pathExtension.lowercased() == "tendies" }
         history = readJSONL(historyURL, HistoryRecord.self).reversed()
         reports = readJSONL(reportsURL, ReportRecord.self).reversed()
     }
@@ -80,19 +75,15 @@ final class AppStore: ObservableObject {
     }
     func delete(_ u: URL) { try? FileManager.default.removeItem(at: u); reload() }
     func templateURL() -> URL? {
-        if selectedTemplate != "builtin" {
-            let u = templatesDir.appendingPathComponent(selectedTemplate)
-            if FileManager.default.fileExists(atPath: u.path) { return u }
-        }
-        return Bundle.main.url(forResource: "Video-B-anim", withExtension: "tendies")
+        Bundle.main.url(forResource: "Video-B-anim", withExtension: "tendies")
     }
 
     // MARK: output folder (security-scoped bookmark)
     func setOutputFolder(_ u: URL) {
-        let ok = u.startAccessingSecurityScopedResource()
-        defer { if ok { u.stopAccessingSecurityScopedResource() } }
+        let access = u.startAccessingSecurityScopedResource()
+        defer { if access { u.stopAccessingSecurityScopedResource() } }
         do {
-            let b = try u.bookmarkData()
+            let b = try u.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
             ud.set(b, forKey: "outputBookmark")
             customOutputName = u.lastPathComponent
             logError("setOutputFolder: saved bookmark for \(u.lastPathComponent)")
@@ -103,29 +94,89 @@ final class AppStore: ObservableObject {
     func resetOutputFolder() { ud.removeObject(forKey: "outputBookmark"); customOutputName = nil }
     private func resolveBookmark(_ b: Data) -> URL? {
         var stale = false
-        return try? URL(resolvingBookmarkData: b, options: [], relativeTo: nil, bookmarkDataIsStale: &stale)
+        guard let url = try? URL(
+            resolvingBookmarkData: b,
+            options: [],
+            relativeTo: nil,
+            bookmarkDataIsStale: &stale
+        ) else {
+            logError("bookmark: resolution failed")
+            return nil
+        }
+        if stale {
+            logError("bookmark: stale; refresh deferred until folder access")
+        }
+        return url
     }
-    /// Copies the finished file into the user-chosen folder when one is set. Returns final location.
-    func deliver(_ file: URL) -> URL {
+
+    func deliver(_ file: URL) -> (url: URL, error: String?) {
         guard let b = ud.data(forKey: "outputBookmark") else {
-            logError("deliver: no output bookmark; kept internally: \(file.path)")
-            return file
+            logError("deliver: no output folder selected; kept internally")
+            return (file, nil)
         }
         guard let folder = resolveBookmark(b) else {
-            logError("deliver: bookmark resolution failed")
-            return file
+            logError("deliver: invalid output folder bookmark")
+            return (file, "Output folder save failed")
         }
+
         let access = folder.startAccessingSecurityScopedResource()
         defer { if access { folder.stopAccessingSecurityScopedResource() } }
-        let dst = folder.appendingPathComponent(file.lastPathComponent)
         do {
-            try FileManager.default.copyItem(at: file, to: dst)
-            logError("deliver: copied successfully to \(dst.path)")
-            return dst
+            let refreshed = try folder.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)
+            ud.set(refreshed, forKey: "outputBookmark")
+            logError("bookmark: refreshed during folder access")
         } catch {
-            logError("deliver: copy failed: \(error)")
-            return file
+            logError("bookmark: refresh failed: \(error)")
         }
+
+        let base = file.deletingPathExtension().lastPathComponent
+        let ext = file.pathExtension
+        var destination = folder.appendingPathComponent(file.lastPathComponent)
+        var n = 1
+
+        while FileManager.default.fileExists(atPath: destination.path) {
+            let name = ext.isEmpty ? "\(base)-\(n)" : "\(base)-\(n).\(ext)"
+            destination = folder.appendingPathComponent(name)
+            n += 1
+        }
+
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        var coordinationError: NSError?
+        var copyError: Error?
+        var finalURL = destination
+
+        coordinator.coordinate(
+            writingItemAt: destination,
+            options: [],
+            error: &coordinationError
+        ) { coordinatedURL in
+            finalURL = coordinatedURL
+            do {
+                try FileManager.default.copyItem(at: file, to: coordinatedURL)
+            } catch {
+                copyError = error
+            }
+        }
+
+        if let error = coordinationError {
+            logError("deliver: coordination failed: \(error)")
+            return (file, "Output folder save failed")
+        }
+        if let error = copyError {
+            logError("deliver: copy failed: \(error)")
+            return (file, "Output folder save failed")
+        }
+
+        guard FileManager.default.fileExists(atPath: finalURL.path),
+              let attributes = try? FileManager.default.attributesOfItem(atPath: finalURL.path),
+              let size = attributes[.size] as? NSNumber,
+              size.intValue > 0 else {
+            logError("deliver: verification failed for \(finalURL.path)")
+            return (file, "Output folder save failed")
+        }
+
+        logError("deliver: verified copy \(finalURL.path), \(size) bytes")
+        return (finalURL, nil)
     }
     func uniqueOutput(_ name: String) -> URL {
         let clean = name.components(separatedBy: CharacterSet(charactersIn: "/\\:")).joined().trimmingCharacters(in: .whitespaces)

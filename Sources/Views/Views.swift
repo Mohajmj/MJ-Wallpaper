@@ -103,10 +103,7 @@ struct CreateView: View {
                 }
                 Section {
                     TextField(Loc.t("create.name"), text: $name).disableAutocorrection(true)
-                    Picker(Loc.t("create.template"), selection: $store.selectedTemplate) {
-                        Text(Loc.t("settings.template.default")).tag("builtin")
-                        ForEach(store.templates, id: \.self) { Text($0.lastPathComponent).tag($0.lastPathComponent) }
-                    }
+
                 }
                 Section {
                     if running {
@@ -148,9 +145,14 @@ struct CreateView: View {
             do {
                 let r = try b.build(video: video, template: template, output: out) { p, _, key in
                     DispatchQueue.main.async { percent = p; stageKey = key } }
-                let final = store.deliver(out)
-                store.record(video: video, output: final, ok: true, report: r, elapsed: Date().timeIntervalSince(began))
-                DispatchQueue.main.async { result = r; resultURL = final; running = false }
+                let delivery = store.deliver(out)
+                store.record(video: video, output: delivery.url, ok: true, report: r, elapsed: Date().timeIntervalSince(began))
+                DispatchQueue.main.async {
+                    result = r
+                    resultURL = delivery.url
+                    errorText = delivery.error
+                    running = false
+                }
             } catch {
                 try? FileManager.default.removeItem(at: out)
                 store.logError("build \(video.lastPathComponent): \(error)")
@@ -204,7 +206,6 @@ struct ReportsView: View {
 struct SettingsView: View {
     @EnvironmentObject var store: AppStore
     @State private var showFolder = false
-    @State private var showTemplate = false
     var body: some View {
         NavigationView {
             Form {
@@ -219,14 +220,6 @@ struct SettingsView: View {
                     Button { showFolder = true } label: { T("settings.output.choose") }
                     if store.customOutputName != nil { Button { store.resetOutputFolder() } label: { T("settings.output.default") } }
                 }
-                Section(header: T("settings.templates")) {
-                    Picker(Loc.t("create.template"), selection: $store.selectedTemplate) {
-                        Text(Loc.t("settings.template.default")).tag("builtin")
-                        ForEach(store.templates, id: \.self) { Text($0.lastPathComponent).tag($0.lastPathComponent) } }
-                    Button { showTemplate = true } label: { T("settings.template.import") }
-                    ForEach(store.templates, id: \.self) { Text($0.lastPathComponent) }
-                        .onDelete { idx in idx.map { store.templates[$0] }.forEach(store.delete) }
-                }
                 Section(header: T("settings.errors")) {
                     NavigationLink(destination: ErrorLogView()) { T("settings.errors") }
                     Button { store.clear(store.errorsURL) } label: { T("settings.errors.clear") }
@@ -234,9 +227,13 @@ struct SettingsView: View {
                 Section { NavigationLink(destination: AboutView()) { T("about.title") } }
             }
             .navigationTitle(Loc.t("tab.settings"))
-            .sheet(isPresented: $showFolder) { FolderPicker { store.setOutputFolder($0); showFolder = false } }
-            .fileImporter(isPresented: $showTemplate, allowedContentTypes: [.data]) { r in
-                if case .success(let u) = r { store.importFile(u, into: store.templatesDir) } }
+            .sheet(isPresented: $showFolder) {
+                FolderPicker { url in
+                    store.setOutputFolder(url)
+                    showFolder = false
+                }
+            }
+
         }.navigationViewStyle(StackNavigationViewStyle())
     }
 }
