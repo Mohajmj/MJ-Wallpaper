@@ -38,7 +38,13 @@ struct FolderPicker: UIViewControllerRepresentable {
     final class Coord: NSObject, UIDocumentPickerDelegate {
         let onPick: (URL) -> Void
         init(_ f: @escaping (URL) -> Void) { onPick = f }
-        func documentPicker(_ c: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) { if let u = urls.first { onPick(u) } }
+        func documentPicker(_ c: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            guard let u = urls.first else { return }
+            c.dismiss(animated: true) { self.onPick(u) }
+        }
+        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            controller.dismiss(animated: true)
+        }
     }
 }
 

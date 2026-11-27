@@ -227,14 +227,11 @@ struct SettingsView: View {
                 Section { NavigationLink(destination: AboutView()) { T("about.title") } }
             }
             .navigationTitle(Loc.t("tab.settings"))
-            .fileImporter(isPresented: $showFolder, allowedContentTypes: [.folder], allowsMultipleSelection: false) { result in
-                switch result {
-                case .success(let urls):
-                    if let url = urls.first {
-                        store.logError("folder: picked \(url.path)"); store.setOutputFolder(url)
-                    }
-                case .failure(let error):
-                    store.logError("folder picker failed: \(error)")
+            .sheet(isPresented: $showFolder) {
+                FolderPicker { url in
+                    store.logError("folder: picked \(url.path)")
+                    store.setOutputFolder(url)
+                    showFolder = false
                 }
             }
 
